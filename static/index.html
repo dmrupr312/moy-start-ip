@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Мой старт ИП — ИИ-агент для регистрации ИП</title>
+<style>
+  :root{--bg:#f4f6f9;--card:#fff;--ink:#1b2430;--muted:#5d6b7c;--line:#e2e7ee;--acc:#0d4cd3;--acc2:#e8efff;--ok:#1a7f4b;--okbg:#e6f5ec;--warn:#9a5b00;--warnbg:#fff4e0;--bad:#b42318;--badbg:#fdecea}
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.45 -apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+  header{display:flex;align-items:center;gap:12px;padding:14px 22px;background:var(--card);border-bottom:1px solid var(--line)}
+  .logo{width:34px;height:34px;border-radius:9px;background:var(--acc);color:#fff;display:grid;place-items:center;font-weight:700}
+  header h1{font-size:17px;margin:0}
+  header p{margin:0;color:var(--muted);font-size:13px}
+  .badge{margin-left:auto;font-size:12px;padding:4px 10px;border-radius:99px;background:var(--acc2);color:var(--acc)}
+  main{display:grid;grid-template-columns:minmax(340px,1fr) minmax(380px,1.15fr);gap:16px;padding:16px;height:calc(100vh - 64px)}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;min-height:0}
+  #log{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+  .msg{max-width:88%;padding:10px 13px;border-radius:12px;white-space:pre-wrap}
+  .bot{background:#f1f4f8;align-self:flex-start;border-top-left-radius:4px}
+  .me{background:var(--acc);color:#fff;align-self:flex-end;border-top-right-radius:4px}
+  .trace{font-size:12px;color:var(--muted);align-self:flex-start}
+  form.chat{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}
+  input,select,textarea{font:inherit;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#fff;width:100%}
+  button{font:inherit;padding:9px 16px;border:0;border-radius:9px;background:var(--acc);color:#fff;cursor:pointer;white-space:nowrap}
+  button.ghost{background:var(--acc2);color:var(--acc)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 10px}
+  .chips button{font-size:13px;padding:6px 10px;background:#f1f4f8;color:var(--ink)}
+  .tabs{display:flex;gap:4px;padding:10px 12px 0;border-bottom:1px solid var(--line)}
+  .tabs button{background:none;color:var(--muted);border-radius:8px 8px 0 0;padding:8px 12px}
+  .tabs button.on{color:var(--acc);box-shadow:inset 0 -2px 0 var(--acc)}
+  .body{padding:16px;overflow:auto;flex:1}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  label{font-size:12px;color:var(--muted);display:block;margin-bottom:3px}
+  .row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+  .row .nm{flex:1.3}.row .bar{flex:1;height:8px;background:#eef1f5;border-radius:99px;overflow:hidden}
+  .row .bar i{display:block;height:100%;background:var(--acc)}
+  .row.best .bar i{background:var(--ok)}
+  .row .sum{width:120px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+  .row.na{color:var(--muted)}
+  .tag{font-size:11px;padding:2px 7px;border-radius:99px;background:var(--okbg);color:var(--ok);margin-left:6px}
+  .note{padding:10px 12px;border-radius:10px;margin:10px 0;font-size:14px}
+  .note.warn{background:var(--warnbg);color:var(--warn)}.note.bad{background:var(--badbg);color:var(--bad)}.note.ok{background:var(--okbg);color:var(--ok)}
+  .muted{color:var(--muted);font-size:13px}
+  ol li,ul li{margin:4px 0}
+  .code{font-weight:700;color:var(--acc);margin-right:6px}
+  h3{margin:4px 0 10px;font-size:15px}
+  .kpi{display:flex;gap:10px;margin-bottom:10px}
+  .kpi div{flex:1;background:#f6f8fb;border-radius:10px;padding:10px}
+  .kpi b{display:block;font-size:20px}
+  @media (max-width:900px){main{grid-template-columns:1fr;height:auto}.panel{min-height:70vh}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">ИП</div>
+  <div><h1>Мой старт ИП</h1><p>ИИ-агент по услуге «Регистрация ИП» и выбору налогового режима</p></div>
+  <span class="badge" id="mode">…</span>
+</header>
+<main>
+  <section class="panel">
+    <div id="log"></div>
+    <div class="chips">
+      <button data-q="Делаю маникюр на дому, около 120 тысяч в месяц, без сотрудников, клиенты физлица">💅 Маникюр</button>
+      <button data-q="Разрабатываю сайты для компаний, доход 300 тысяч в месяц, без сотрудников">💻 IT для бизнеса</button>
+      <button data-q="Продаю одежду на маркетплейсах, оборот 30 млн в год, закупка 18 млн, 3 сотрудника, зарплаты 1,8 млн в год">📦 Маркетплейс</button>
+      <button data-q="заново">↺ Заново</button>
+    </div>
+    <form class="chat" id="chatf">
+      <input id="inp" placeholder="Чем будете заниматься и сколько планируете зарабатывать?" autocomplete="off">
+      <button>Отправить</button>
+    </form>
+  </section>
+
+  <section class="panel">
+    <div class="tabs" id="tabs">
+      <button data-t="calc" class="on">Расчёт режимов</button>
+      <button data-t="okved">ОКВЭД</button>
+      <button data-t="plan">План регистрации</button>
+      <button data-t="check">Проверка заявления</button>
+    </div>
+    <div class="body" id="t-calc">
+      <h3>Быстрый расчёт</h3>
+      <form id="calcf" class="grid">
+        <div><label>Доход в год, ₽</label><input name="income" type="number" min="0" value="1440000"></div>
+        <div><label>Расходы в год (без зарплат), ₽</label><input name="expenses" type="number" min="0" value="0"></div>
+        <div><label>Сотрудников</label><input name="employees" type="number" min="0" value="0"></div>
+        <div><label>ФОТ в год, ₽</label><input name="payroll" type="number" min="0" value="0"></div>
+        <div><label>Клиенты</label><select name="b2c_share"><option value="1">физлица</option><option value="0.5">и те и другие</option><option value="0">компании и ИП</option></select></div>
+        <div><label>Перепродажа товаров</label><select name="resale"><option value="false">нет</option><option value="true">да</option></select></div>
+        <div><label>Стоимость патента в год, ₽ (если знаете)</label><input name="patent_cost" type="number" min="0" placeholder="patent.nalog.gov.ru"></div>
+        <div><label>Год</label><select name="year"><option>2027</option><option>2026</option></select></div>
+        <div style="grid-column:1/-1"><button>Сравнить режимы</button></div>
+      </form>
+      <div id="calcout" style="margin-top:14px"></div>
+    </div>
+    <div class="body" id="t-okved" hidden>
+      <h3>Подбор кодов ОКВЭД</h3>
+      <form id="okf" style="display:flex;gap:8px"><input name="q" placeholder="Опишите деятельность: «ремонт квартир», «репетитор по математике»"><button>Найти</button></form>
+      <div id="okout" style="margin-top:12px"></div>
+    </div>
+    <div class="body" id="t-plan" hidden><div id="planout" class="muted">План появится после расчёта в чате или здесь — выберите режим:
+      <p><select id="planreg"><option value="npd">НПД</option><option value="usn6" selected>УСН 6%</option><option value="usn15">УСН 15%</option><option value="psn">Патент</option><option value="ausn8">АУСН 8%</option><option value="osno">ОСНО</option></select></p>
+      <button class="ghost" id="planbtn">Показать план</button></div></div>
+    <div class="body" id="t-check" hidden>
+      <h3>Предпроверка заявления Р21001</h3>
+      <p class="muted">Данные обрабатываются только для проверки и не сохраняются. Для демо можно ввести тестовые.</p>
+      <form id="chkf" class="grid">
+        <div style="grid-column:1/-1"><label>ФИО как в паспорте</label><input name="fio" placeholder="Иванова Анна Сергеевна"></div>
+        <div><label>Дата рождения</label><input name="birth_date" type="date"></div>
+        <div><label>Паспорт (серия и номер)</label><input name="passport" placeholder="4510 123456"></div>
+        <div><label>ИНН (если есть)</label><input name="inn" placeholder="12 цифр"></div>
+        <div><label>E-mail</label><input name="email" type="email"></div>
+        <div style="grid-column:1/-1"><label>Коды ОКВЭД через запятую</label><input name="okved" placeholder="96.02, 96.09"></div>
+        <div><label>Канал подачи</label><select name="channel"><option value="gosuslugi">Госуслуги</option><option value="fns">Сервис ФНС</option><option value="bank">Банк</option><option value="mfc">МФЦ</option></select></div>
+        <div><label>Режим</label><select name="regime"><option value="usn6">УСН 6%</option><option value="npd">НПД</option><option value="usn15">УСН 15%</option><option value="psn">Патент</option><option value="ausn8">АУСН 8%</option><option value="osno">ОСНО</option></select></div>
+        <div style="grid-column:1/-1"><label><input type="checkbox" name="already_ip" style="width:auto"> у меня уже есть статус ИП</label></div>
+        <div style="grid-column:1/-1"><button>Проверить</button></div>
+      </form>
+      <div id="chkout" style="margin-top:12px"></div>
+    </div>
+  </section>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+let SID = null;
+try { SID = sessionStorage.getItem('sid'); } catch(e) {}
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const rub = x => x == null ? '—' : Math.round(x).toLocaleString('ru-RU') + ' ₽';
+async function api(path, body){
+  const r = await fetch(path, {method: body ? 'POST' : 'GET', headers: {'Content-Type':'application/json'}, body: body ? JSON.stringify(body) : undefined});
+  return r.json();
+}
+function add(text, cls){ const d = document.createElement('div'); d.className = 'msg ' + cls; d.textContent = text; $('#log').appendChild(d); $('#log').scrollTop = 1e9; return d; }
+function tab(t){ document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t)); ['calc','okved','plan','check'].forEach(x => $('#t-'+x).hidden = x !== t); }
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => tab(b.dataset.t));
+
+function renderCalc(res){
+  if(!res) return;
+  const av = res.results.filter(r => r.available && r.total != null);
+  const max = Math.max(...av.map(r => r.total), 1);
+  const order = res.ranking.map(c => res.results.find(r => r.code === c));
+  let h = '';
+  if(res.best){
+    h += `<div class="kpi"><div><span class="muted">Лучший вариант</span><b>${esc(res.best.name)}</b></div><div><span class="muted">Нагрузка в год</span><b>${rub(res.best.total)}</b></div>${res.savings_vs_worst ? `<div><span class="muted">Экономия vs худший</span><b>${rub(res.savings_vs_worst)}</b></div>` : ''}</div>`;
+  }
+  order.forEach((r,i) => {
+    h += `<div class="row ${i===0?'best':''}" title="${esc(r.notes.join('; '))}"><div class="nm">${esc(r.name)}${i===0?'<span class="tag">выгоднее</span>':''}<div class="muted">налог ${rub(r.tax)} · взносы ${rub(r.contrib_self + r.contrib_staff)}${r.vat ? ' · НДС ' + rub(r.vat) : ''}</div></div><div class="bar"><i style="width:${(r.total/max*100).toFixed(1)}%"></i></div><div class="sum">${rub(r.total)}</div></div>`;
+  });
+  res.results.filter(r => r.available && r.total == null).forEach(r => h += `<div class="row na"><div class="nm">${esc(r.name)}<div class="muted">${esc(r.notes[0])}</div></div><div class="sum">—</div></div>`);
+  res.results.filter(r => !r.available).forEach(r => h += `<div class="row na"><div class="nm">${esc(r.name)}<div class="muted">недоступен: ${esc(r.reasons.join(', '))}</div></div><div class="sum">✕</div></div>`);
+  res.warnings.forEach(w => h += `<div class="note warn">${esc(w)}</div>`);
+  h += `<p class="muted">${esc(res.disclaimer)}</p>`;
+  $('#calcout').innerHTML = h;
+}
+function renderOkved(codes){
+  if(!codes || !codes.length){ $('#okout').innerHTML = '<p class="muted">Ничего не найдено — опишите иначе.</p>'; return; }
+  $('#okout').innerHTML = codes.map((c,i) => `<div class="row"><div class="nm"><span class="code">${c.code}</span>${esc(c.title)}<div class="muted">${i===0?'основной · ':''}${c.npd_ok?'можно на НПД':'нельзя на НПД'} · ${c.psn_typical?'обычно есть патент':'патента обычно нет'}${c.license_or_special?' · есть особые требования':''}</div></div></div>`).join('');
+}
+function renderPlan(plan){
+  if(!plan) return;
+  $('#planout').innerHTML = `<h3>План регистрации</h3><ol>${plan.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol><h3>Документы</h3><ul>${plan.documents.map(s => `<li>${esc(s)}</li>`).join('')}</ul>`;
+}
+function renderCheck(pc, draft){
+  if(!pc) return;
+  const cls = pc.refusal_risk === 'низкий' ? 'ok' : pc.refusal_risk === 'средний' ? 'warn' : 'bad';
+  let h = `<div class="note ${cls}"><b>Риск отказа: ${esc(pc.refusal_risk)}</b></div>`;
+  pc.errors.forEach(e => h += `<div class="note bad">✕ ${esc(e)}</div>`);
+  pc.warnings.forEach(e => h += `<div class="note warn">! ${esc(e)}</div>`);
+  pc.passed.forEach(e => h += `<div class="note ok">✓ ${esc(e)}</div>`);
+  if(draft){
+    h += '<h3>Черновик данных для Р21001</h3>';
+    for(const [sec, val] of Object.entries(draft)){
+      h += `<p><b>${esc(sec)}</b><br>` + (typeof val === 'object' && val ? Object.entries(val).map(([k,v]) => `${esc(k)}: ${esc(Array.isArray(v) ? (v.join('; ') || '—') : (v ?? '—'))}`).join('<br>') : esc(val)) + '</p>';
+    }
+  }
+  $('#chkout').innerHTML = h;
+}
+
+async function send(text){
+  if(!text.trim()) return;
+  add(text, 'me');
+  const wait = add('Думаю…', 'bot');
+  try{
+    const r = await api('/api/chat', {session_id: SID, message: text});
+    SID = r.session_id; try { sessionStorage.setItem('sid', SID); } catch(e) {}
+    wait.textContent = r.reply;
+    (r.trace || []).forEach(t => { const d = document.createElement('div'); d.className = 'trace'; d.textContent = t.tool ? `🔧 инструмент: ${t.tool}` : `⚠ ${t.error}`; $('#log').insertBefore(d, wait); });
+    $('#mode').textContent = r.mode;
+    if(r.okved) renderOkved(r.okved);
+    if(r.plan) renderPlan(r.plan);
+    if(r.precheck) renderCheck(r.precheck, r.draft);
+    if(r.calc){ renderCalc(r.calc); tab('calc'); }
+    wait.scrollIntoView({block: 'start', behavior: 'smooth'});
+  }catch(e){ wait.textContent = 'Сервер недоступен. Проверьте, что приложение запущено.'; }
+}
+$('#chatf').onsubmit = e => { e.preventDefault(); const v = $('#inp').value; $('#inp').value = ''; send(v); };
+document.querySelectorAll('.chips button').forEach(b => b.onclick = () => send(b.dataset.q));
+$('#calcf').onsubmit = async e => {
+  e.preventDefault(); const f = Object.fromEntries(new FormData(e.target));
+  for(const k of ['income','expenses','payroll','patent_cost','b2c_share']) f[k] = f[k] === '' ? null : Number(f[k]);
+  f.employees = Number(f.employees || 0); f.year = Number(f.year); f.resale = f.resale === 'true';
+  renderCalc(await api('/api/calc', f));
+};
+$('#okf').onsubmit = async e => { e.preventDefault(); renderOkved((await api('/api/okved', {query: e.target.q.value})).codes); };
+$('#planbtn').onclick = async () => { const r = await api('/api/precheck', {regime: $('#planreg').value, fio: 'x x', okved: ['00.00']}); renderPlan(r.plan); };
+$('#chkf').onsubmit = async e => {
+  e.preventDefault(); const f = Object.fromEntries(new FormData(e.target));
+  f.okved = (f.okved || '').split(/[,;\s]+/).filter(Boolean); f.already_ip = !!f.already_ip;
+  const r = await api('/api/precheck', f); renderCheck(r.precheck, r.draft); renderPlan(r.plan);
+};
+api('/api/health').then(h => { $('#mode').textContent = h.mode; add(h.greeting, 'bot'); }).catch(() => add('Сервер недоступен.', 'bot'));
+</script>
+</body>
+</html>
