@@ -13,7 +13,7 @@ import re
 OKVED = [
     # --- торговля ---
     ("47.91", "Торговля розничная по почте или по информационно-коммуникационной сети Интернет",
-     "интернет магазин маркетплейс вайлдберриз wildberries озон ozon онлайн продаж товар доставк", False, False, False),
+     "!интернет магазин !маркетплейс !вайлдберриз !wildberries !озон !ozon онлайн продаж товар доставк", False, False, False),
     ("47.19", "Торговля розничная прочая в неспециализированных магазинах",
      "магазин розниц продаж товар", False, True, False),
     ("47.11", "Торговля розничная преимущественно пищевыми продуктами в неспециализированных магазинах",
@@ -146,8 +146,16 @@ def search_okved(query: str, limit: int = 5) -> list[dict]:
         score = 0.0
         for w in q:
             for k in kw_list:
-                if w.startswith(k) or (len(w) >= 4 and k.startswith(w)):
-                    score += 2.0
+                weight = 4.0 if k.startswith("!") else 2.0
+                k = k.lstrip("!")
+                if len(k) < 3:
+                    continue
+                if len(k) == 3:
+                    hit = w.startswith(k) and len(w) <= 5   # «сад», «мыло», но не «оборот» от «обо»
+                else:
+                    hit = w.startswith(k) or (len(w) >= 4 and k.startswith(w))
+                if hit:
+                    score += weight
                     break
             if len(w) >= 5 and w[:5] in title_l:
                 score += 1.0

@@ -102,22 +102,23 @@ def from_env():
                 key = base64.b64encode(f"{cid}:{secret}".encode()).decode()
         if not key:
             return None
-        return GigaChat(key, os.getenv("GIGACHAT_SCOPE", "GIGACHAT_API_PERS"),
-                        os.getenv("GIGACHAT_MODEL", "GigaChat"),
+        return GigaChat(key, os.getenv("GIGACHAT_SCOPE") or "GIGACHAT_API_PERS",
+                        os.getenv("GIGACHAT_MODEL") or "GigaChat",
                         os.getenv("GIGACHAT_CA_BUNDLE") or None,
                         os.getenv("GIGACHAT_VERIFY_SSL", "true").lower() != "false")
     if provider == "yandex":
         key, folder = os.getenv("YANDEX_API_KEY"), os.getenv("YANDEX_FOLDER_ID")
         if not (key and folder):
             return None
-        model = os.getenv("YANDEX_MODEL", "yandexgpt/latest")
+        model = os.getenv("YANDEX_MODEL") or "yandexgpt/latest"
         return OpenAICompatible("https://llm.api.cloud.yandex.net/v1", key,
                                 f"gpt://{folder}/{model}", {"OpenAI-Project": folder})
     key = os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY") or os.getenv("OPENROUTER_API_KEY")
-    base = os.getenv("LLM_BASE_URL")
+    base = os.getenv("LLM_BASE_URL") or None
     if not base and os.getenv("OPENROUTER_API_KEY"):
         base = "https://openrouter.ai/api/v1"
     base = base or "https://api.openai.com/v1"
     if not key and "localhost" not in base and "127.0.0.1" not in base and "ollama" not in base:
         return None
-    return OpenAICompatible(base, key or "ollama", os.getenv("LLM_MODEL", "gpt-4o-mini"))
+    default_model = "deepseek/deepseek-chat" if "openrouter" in base else "gpt-4o-mini"
+    return OpenAICompatible(base, key or "ollama", os.getenv("LLM_MODEL") or default_model)

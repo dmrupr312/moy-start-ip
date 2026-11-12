@@ -32,12 +32,40 @@ def load_dotenv(path: Path):
 
 load_dotenv(ROOT / ".env")
 
-from agent import checklist, okved, rules  # noqa: E402
+import threading  # noqa: E402
+import time  # noqa: E402
+
+from agent import analytics, checklist, okved, rules  # noqa: E402
 from agent.core import Agent, GREETING  # noqa: E402
 
 AGENT = Agent()
 STATIC = ROOT / "static"
 MAX_BODY = 64 * 1024
+CHAT_LIMIT = int(os.getenv("CHAT_LIMIT_PER_MIN", "20"))   # защита лимитов LLM на публичном сайте
+API_LIMIT = int(os.getenv("API_LIMIT_PER_MIN", "120"))
+
+
+class RateLimiter:
+    """Скользящее окно в 60 секунд на IP."""
+
+    def __init__(self):
+        self.hits: dict[tuple, list[float]] = {}
+        self.lock = threading.Lock()
+
+    def allow(self, ip: str, bucket: str, limit: int) -> bool:
+        now = time.time()
+        with self.lock:
+            if len(self.hits) > 10_000:
+                self.hits.clear()
+            q = [t for t in self.hits.get((ip, bucket), []) if now - t < 60]
+            ok = len(q) < limit
+            if ok:
+                q.append(now)
+            self.hits[(ip, bucket)] = q
+            return ok
+
+
+LIMITER = RateLimiter()
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -64,6 +92,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(200, {"status": "ok", "mode": AGENT.mode, "greeting": GREETING})
         if path in ("/", "/index.html"):
             return self._send(200, (STATIC / "index.html").read_bytes(), "text/html; charset=utf-8")
+        if path == "/favicon.svg":
+            return self._send(200, (STATIC / "favicon.svg").read_bytes(), "image/svg+xml")
         self._json(404, {"error": "not found"})
 
     def do_POST(self):
@@ -75,7 +105,21 @@ class Handler(BaseHTTPRequestHandler):
         except json.JSONDecodeError:
             return self._json(400, {"error": "некорректный JSON"})
         path = self.path.split("?")[0]
+        ip = (self.headers.get("X-Forwarded-For") or self.client_address[0]).split(",")[0].strip()
+        if path == "/api/chat" and not LIMITER.allow(ip, "chat", CHAT_LIMIT):
+            return self._json(429, {"error": "Слишком много сообщений. Подождите минуту.",
+                                    "reply": "Слишком много сообщений подряд — подождите минуту и попробуйте снова."})
+        if not LIMITER.allow(ip, "api", API_LIMIT):
+            return self._json(429, {"error": "Слишком много запросов. Подождите минуту."})
         try:
+            if path == "/api/analyze":
+                return self._json(200, analytics.full(data))
+            if path == "/api/service":
+                return self._json(200, analytics.service(int(data.get("year", 2027))))
+            if path == "/api/effect":
+                return self._json(200, analytics.effect(int(data.get("new_ip", 734_000)),
+                                                        float(data.get("share_helped", 0.01)),
+                                                        float(data.get("overpay", 200_000))))
             if path == "/api/chat":
                 msg = str(data.get("message", ""))[:2000]
                 return self._json(200, AGENT.handle(data.get("session_id"), msg))

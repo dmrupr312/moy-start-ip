@@ -1,0 +1,23 @@
+# Render Blueprint: New → Blueprint → выберите этот репозиторий → Apply.
+services:
+  - type: web
+    name: moy-start-ip
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: GIGACHAT_VERIFY_SSL
+        value: "false"
+      # Секреты Render спросит при создании; можно оставить пустыми — агент будет в офлайн-режиме.
+      - key: LLM_PROVIDER
+        sync: false
+      - key: GIGACHAT_AUTH_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        sync: false

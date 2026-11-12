@@ -4,212 +4,474 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Мой старт ИП — ИИ-агент для регистрации ИП</title>
+<meta name="description" content="ИИ-агент по госуслуге «Регистрация ИП»: подбор ОКВЭД, сравнение налоговых режимов, проверка заявления Р21001.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap">
 <style>
-  :root{--bg:#f4f6f9;--card:#fff;--ink:#1b2430;--muted:#5d6b7c;--line:#e2e7ee;--acc:#0d4cd3;--acc2:#e8efff;--ok:#1a7f4b;--okbg:#e6f5ec;--warn:#9a5b00;--warnbg:#fff4e0;--bad:#b42318;--badbg:#fdecea}
-  *{box-sizing:border-box}
-  body{margin:0;font:15px/1.45 -apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
-  header{display:flex;align-items:center;gap:12px;padding:14px 22px;background:var(--card);border-bottom:1px solid var(--line)}
-  .logo{width:34px;height:34px;border-radius:9px;background:var(--acc);color:#fff;display:grid;place-items:center;font-weight:700}
-  header h1{font-size:17px;margin:0}
-  header p{margin:0;color:var(--muted);font-size:13px}
-  .badge{margin-left:auto;font-size:12px;padding:4px 10px;border-radius:99px;background:var(--acc2);color:var(--acc)}
-  main{display:grid;grid-template-columns:minmax(340px,1fr) minmax(380px,1.15fr);gap:16px;padding:16px;height:calc(100vh - 64px)}
-  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;min-height:0}
-  #log{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
-  .msg{max-width:88%;padding:10px 13px;border-radius:12px;white-space:pre-wrap}
-  .bot{background:#f1f4f8;align-self:flex-start;border-top-left-radius:4px}
-  .me{background:var(--acc);color:#fff;align-self:flex-end;border-top-right-radius:4px}
-  .trace{font-size:12px;color:var(--muted);align-self:flex-start}
-  form.chat{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}
-  input,select,textarea{font:inherit;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#fff;width:100%}
-  button{font:inherit;padding:9px 16px;border:0;border-radius:9px;background:var(--acc);color:#fff;cursor:pointer;white-space:nowrap}
-  button.ghost{background:var(--acc2);color:var(--acc)}
-  .chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 10px}
-  .chips button{font-size:13px;padding:6px 10px;background:#f1f4f8;color:var(--ink)}
-  .tabs{display:flex;gap:4px;padding:10px 12px 0;border-bottom:1px solid var(--line)}
-  .tabs button{background:none;color:var(--muted);border-radius:8px 8px 0 0;padding:8px 12px}
-  .tabs button.on{color:var(--acc);box-shadow:inset 0 -2px 0 var(--acc)}
-  .body{padding:16px;overflow:auto;flex:1}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  label{font-size:12px;color:var(--muted);display:block;margin-bottom:3px}
-  .row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
-  .row .nm{flex:1.3}.row .bar{flex:1;height:8px;background:#eef1f5;border-radius:99px;overflow:hidden}
-  .row .bar i{display:block;height:100%;background:var(--acc)}
-  .row.best .bar i{background:var(--ok)}
-  .row .sum{width:120px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
-  .row.na{color:var(--muted)}
-  .tag{font-size:11px;padding:2px 7px;border-radius:99px;background:var(--okbg);color:var(--ok);margin-left:6px}
-  .note{padding:10px 12px;border-radius:10px;margin:10px 0;font-size:14px}
-  .note.warn{background:var(--warnbg);color:var(--warn)}.note.bad{background:var(--badbg);color:var(--bad)}.note.ok{background:var(--okbg);color:var(--ok)}
-  .muted{color:var(--muted);font-size:13px}
-  ol li,ul li{margin:4px 0}
-  .code{font-weight:700;color:var(--acc);margin-right:6px}
-  h3{margin:4px 0 10px;font-size:15px}
-  .kpi{display:flex;gap:10px;margin-bottom:10px}
-  .kpi div{flex:1;background:#f6f8fb;border-radius:10px;padding:10px}
-  .kpi b{display:block;font-size:20px}
-  @media (max-width:900px){main{grid-template-columns:1fr;height:auto}.panel{min-height:70vh}}
+:root{
+  --bg:#0D1216;--bg2:#121A1F;--card:#151D22;--card2:#1B252B;--pill:#26323A;--line:#2A373F;
+  --ink:#F4F6F5;--muted:#A7B2B8;--dim:#6F7C84;
+  --g:#21A038;--g2:#2FD15A;--gdim:#1B6B33;--white:#F4F6F5;--warn:#F2C14E;--bad:#FF7A59;
+  --r:22px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{font:15px/1.45 Montserrat,"Segoe UI",Arial,sans-serif;color:var(--ink);background:var(--bg);
+  background-image:radial-gradient(900px 600px at -10% 110%,rgba(33,160,56,.32),transparent 60%),
+  radial-gradient(700px 500px at 110% -10%,rgba(33,160,56,.16),transparent 60%),
+  radial-gradient(600px 400px at 85% 95%,rgba(47,209,90,.10),transparent 60%);background-attachment:fixed}
+.arcs{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5}
+.wrap{position:relative;z-index:1;max-width:1560px;margin:0 auto;padding:18px 22px 28px}
+/* шапка */
+header{display:flex;align-items:flex-end;gap:22px;flex-wrap:wrap;margin-bottom:14px}
+.brand h1{margin:0;font-size:34px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;line-height:1}
+.brand h1 span{color:var(--g2)}
+.bar{display:block;width:86px;height:6px;border-radius:6px;background:var(--g);margin-top:10px}
+.brand p{margin:10px 0 0;color:var(--muted);font-size:13px;letter-spacing:.3px;text-transform:uppercase}
+.head-right{margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:8px 16px;font-size:12px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;border:1px solid var(--line);background:rgba(38,50,58,.7);color:var(--ink)}
+.pill .dot{width:8px;height:8px;border-radius:50%;background:var(--g2);box-shadow:0 0 10px var(--g2)}
+/* шевроны */
+nav.chev{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 16px}
+nav.chev button{--c:var(--white);font:600 12px/1 Montserrat,Arial,sans-serif;letter-spacing:.5px;text-transform:uppercase;color:#121A1F;background:var(--c);border:0;padding:9px 26px 9px 22px;cursor:pointer;
+  clip-path:polygon(0 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,0 100%,12px 50%)}
+nav.chev button:first-child{clip-path:polygon(0 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,0 100%);padding-left:16px}
+nav.chev button.on{--c:var(--g);color:#fff}
+nav.chev button:hover:not(.on){--c:#DDE7E1}
+/* сетка */
+main{display:grid;grid-template-columns:minmax(360px,.85fr) minmax(480px,1.35fr);gap:16px;align-items:start}
+.card{background:linear-gradient(180deg,rgba(27,37,43,.92),rgba(18,26,31,.92));border:1px solid var(--line);border-radius:var(--r);backdrop-filter:blur(6px)}
+.chat{display:flex;flex-direction:column;height:calc(100vh - 170px);min-height:560px;position:sticky;top:16px}
+.chat-h{padding:18px 20px 10px;display:flex;align-items:center;gap:10px}
+h2{margin:0;font-size:22px;font-weight:800;text-transform:uppercase;letter-spacing:.4px}
+h2+.bar{width:64px;height:5px;margin-top:8px}
+h3{margin:0 0 10px;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+#log{flex:1;overflow:auto;padding:6px 18px 12px;display:flex;flex-direction:column;gap:10px;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.msg{max-width:90%;padding:11px 15px;border-radius:18px;white-space:pre-wrap;font-size:14px}
+.bot{background:var(--card2);border:1px solid var(--line);align-self:flex-start;border-top-left-radius:6px}
+.me{background:var(--g);color:#fff;align-self:flex-end;border-top-right-radius:6px;font-weight:500}
+.trace{font-size:11px;color:var(--g2);align-self:flex-start;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 12px}
+.chips button{font:600 12px Montserrat,Arial,sans-serif;text-transform:uppercase;letter-spacing:.4px;padding:9px 14px;border-radius:999px;background:var(--pill);color:var(--ink);border:1px solid #3B5546;cursor:pointer}
+.chips button:hover{border-color:var(--g2)}
+form.send{display:flex;gap:8px;padding:12px 14px 16px;border-top:1px solid var(--line)}
+input,select{font:500 14px Montserrat,Arial,sans-serif;padding:11px 14px;border:1px solid var(--line);border-radius:14px;background:#0F161A;color:var(--ink);width:100%;outline:none}
+input:focus,select:focus{border-color:var(--g)}
+form.send input{border-radius:999px;padding:12px 18px}
+.btn{font:800 13px Montserrat,Arial,sans-serif;text-transform:uppercase;letter-spacing:.5px;padding:12px 22px;border:0;border-radius:999px;background:var(--white);color:#0D1216;cursor:pointer;white-space:nowrap}
+.btn:hover{background:#fff;box-shadow:0 0 0 3px rgba(47,209,90,.35)}
+.btn.green{background:var(--g);color:#fff}
+.view{padding:22px 24px 26px;min-height:560px}
+.pane[hidden]{display:none}
+.title{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.lead{color:var(--muted);font-size:13px;max-width:560px;margin:8px 0 0}
+details.params{background:rgba(15,22,26,.6);border:1px solid var(--line);border-radius:18px;padding:12px 16px;margin-bottom:18px}
+details.params summary{cursor:pointer;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--g2)}
+.form{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px;font-weight:600}
+.best{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.best .big{font-size:40px;font-weight:800;color:var(--g2);line-height:1;text-transform:uppercase}
+.best .white{background:var(--white);color:#0D1216;border-radius:999px;padding:10px 20px;font-weight:800;font-size:15px;text-transform:uppercase}
+.rings{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0 20px}
+.ring{background:rgba(15,22,26,.55);border:1px solid var(--line);border-radius:18px;padding:14px 10px;text-align:center}
+.ring .cap{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;font-weight:600;margin-top:6px}
+.chartbox{background:rgba(15,22,26,.55);border:1px solid var(--line);border-radius:18px;padding:16px 16px 10px;margin-bottom:16px;position:relative}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin:4px 0 8px;font-size:12px}
+.legend span{display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+.legend i{width:14px;height:4px;border-radius:2px;display:inline-block}
+.legend span.off{opacity:.35}
+.seg{display:inline-flex;background:var(--pill);border-radius:999px;padding:3px}
+.seg button{font:700 11px Montserrat,Arial,sans-serif;text-transform:uppercase;letter-spacing:.4px;border:0;background:none;color:var(--muted);padding:7px 12px;border-radius:999px;cursor:pointer}
+.seg button.on{background:var(--white);color:#0D1216}
+.tip{position:absolute;pointer-events:none;background:#0B1013;border:1px solid var(--g);border-radius:12px;padding:8px 10px;font-size:12px;min-width:200px;z-index:5;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+.tip b{color:var(--g2)}
+.note{border-radius:14px;padding:11px 14px;margin:8px 0;font-size:13px;border:1px solid var(--line);background:rgba(15,22,26,.6)}
+.note.warn{border-color:#5E4B1B;color:#F7D67F}
+.note.bad{border-color:#6B2A1D;color:#FFB59E}
+.note.ok{border-color:var(--gdim);color:#9DF0B4}
+.switch{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0}
+.switch .p{background:var(--pill);border-radius:999px;padding:7px 14px;font-weight:700;font-size:12px;text-transform:uppercase}
+.switch .p.w{background:var(--white);color:#0D1216}
+.lim{display:grid;grid-template-columns:150px 1fr 104px;gap:12px;align-items:center;margin:8px 0;font-size:13px}
+.lim .track{height:12px;background:var(--pill);border-radius:999px;overflow:hidden}
+.lim .track i{display:block;height:100%;border-radius:999px;background:var(--g)}
+.lim .v{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.row{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.code{font-weight:800;color:var(--g2);min-width:64px}
+.muted{color:var(--muted);font-size:12px}
+.tag{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:3px 8px;border-radius:999px;background:var(--pill);margin:4px 4px 0 0}
+.tag.g{background:rgba(33,160,56,.2);color:var(--g2)}
+ol.steps{counter-reset:s;list-style:none;padding:0;margin:0}
+ol.steps li{counter-increment:s;position:relative;padding:12px 0 12px 54px;border-bottom:1px solid var(--line);font-size:14px}
+ol.steps li::before{content:counter(s);position:absolute;left:0;top:9px;width:36px;height:36px;border-radius:50%;border:2px solid var(--g);display:grid;place-items:center;font-weight:800;color:var(--g2)}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:18px}
+.stat{display:flex;gap:14px;align-items:center}
+.stat .num{background:var(--pill);border-radius:999px;padding:10px 18px;font-size:26px;font-weight:600;color:var(--g2);white-space:nowrap;min-width:150px;text-align:center}
+.stat .lb{font-size:12px;text-transform:uppercase;letter-spacing:.3px;font-weight:600}
+.stat a{color:var(--dim);font-size:11px;text-transform:none;font-weight:500}
+.effect{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:center}
+.effect input[type=range]{padding:0;accent-color:var(--g2);background:none;border:0}
+.effect .out{font-size:44px;font-weight:800;color:var(--g2);line-height:1}
+table.pay{width:100%;border-collapse:collapse;font-size:13px}
+table.pay td{padding:9px 6px;border-bottom:1px solid var(--line)}
+table.pay td:last-child{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+footer{margin-top:18px;color:var(--dim);font-size:11px;text-align:center}
+@media (max-width:1100px){main{grid-template-columns:1fr}.chat{position:static;height:70vh}.rings{grid-template-columns:repeat(2,1fr)}.form{grid-template-columns:1fr 1fr}.two,.effect,.stats{grid-template-columns:1fr}}
+@media (max-width:560px){.brand h1{font-size:26px}.form{grid-template-columns:1fr}.lim{grid-template-columns:1fr 1fr}.lim .track{grid-column:1/-1;order:3}}
 </style>
 </head>
 <body>
+<svg class="arcs" viewBox="0 0 1600 900" preserveAspectRatio="none" aria-hidden="true"><path d="M-50 760 C 300 600, 600 720, 900 900" stroke="#21A038" stroke-opacity=".35" fill="none" stroke-width="2"/><path d="M1000 640 C 1200 560, 1400 560, 1650 640" stroke="#21A038" stroke-opacity=".3" fill="none" stroke-width="2"/></svg>
+<div class="wrap">
 <header>
-  <div class="logo">ИП</div>
-  <div><h1>Мой старт ИП</h1><p>ИИ-агент по услуге «Регистрация ИП» и выбору налогового режима</p></div>
-  <span class="badge" id="mode">…</span>
+  <div class="brand"><h1>Мой старт <span>ИП</span></h1><i class="bar"></i><p>ИИ-агент по госуслуге «Регистрация ИП» и выбору налогового режима</p></div>
+  <div class="head-right"><span class="pill"><i class="dot"></i><span id="mode">…</span></span><span class="pill">Правила НК РФ 2026–2027</span></div>
 </header>
+
+<nav class="chev" id="nav">
+  <button data-t="calc" class="on">Расчёт</button>
+  <button data-t="dyn">Аналитика</button>
+  <button data-t="pay">Платежи</button>
+  <button data-t="okved">ОКВЭД</button>
+  <button data-t="plan">План</button>
+  <button data-t="check">Проверка Р21001</button>
+  <button data-t="service">Об услуге</button>
+</nav>
+
 <main>
-  <section class="panel">
+  <section class="card chat">
+    <div class="chat-h"><div><h2>Агент</h2><i class="bar"></i></div></div>
     <div id="log"></div>
     <div class="chips">
-      <button data-q="Делаю маникюр на дому, около 120 тысяч в месяц, без сотрудников, клиенты физлица">💅 Маникюр</button>
-      <button data-q="Разрабатываю сайты для компаний, доход 300 тысяч в месяц, без сотрудников">💻 IT для бизнеса</button>
-      <button data-q="Продаю одежду на маркетплейсах, оборот 30 млн в год, закупка 18 млн, 3 сотрудника, зарплаты 1,8 млн в год">📦 Маркетплейс</button>
+      <button data-q="Делаю маникюр на дому, около 120 тысяч в месяц, без сотрудников, клиенты физлица">Маникюр</button>
+      <button data-q="Разрабатываю сайты для компаний, доход 300 тысяч в месяц, без сотрудников">IT для бизнеса</button>
+      <button data-q="Продаю одежду на маркетплейсах, оборот 30 млн в год, закупка 18 млн, 3 сотрудника, зарплаты 1,8 млн в год">Маркетплейс</button>
       <button data-q="заново">↺ Заново</button>
     </div>
-    <form class="chat" id="chatf">
-      <input id="inp" placeholder="Чем будете заниматься и сколько планируете зарабатывать?" autocomplete="off">
-      <button>Отправить</button>
-    </form>
+    <form class="send" id="chatf"><input id="inp" placeholder="Чем будете заниматься и сколько зарабатывать?" autocomplete="off" maxlength="2000"><button class="btn green">→</button></form>
   </section>
 
-  <section class="panel">
-    <div class="tabs" id="tabs">
-      <button data-t="calc" class="on">Расчёт режимов</button>
-      <button data-t="okved">ОКВЭД</button>
-      <button data-t="plan">План регистрации</button>
-      <button data-t="check">Проверка заявления</button>
+  <section class="card view">
+    <!-- РАСЧЁТ -->
+    <div class="pane" id="p-calc">
+      <div class="title"><div><h2>Сравнение режимов</h2><i class="bar"></i><p class="lead">Годовая нагрузка: налог, взносы и НДС. Параметры заполняются из диалога с агентом — или задайте их вручную.</p></div></div>
+      <details class="params" id="params"><summary>Параметры бизнеса</summary>
+        <form id="calcf" class="form">
+          <div><label>Доход в год, ₽</label><input name="income" type="number" min="0" step="1000" value="1440000"></div>
+          <div><label>Расходы в год (без зарплат), ₽</label><input name="expenses" type="number" min="0" step="1000" value="0"></div>
+          <div><label>Работников</label><input name="employees" type="number" min="0" value="0"></div>
+          <div><label>Фонд оплаты труда в год, ₽</label><input name="payroll" type="number" min="0" step="1000" value="0"></div>
+          <div><label>Клиенты</label><select name="b2c_share"><option value="1">физлица</option><option value="0.5">и те и другие</option><option value="0">компании и ИП</option></select></div>
+          <div><label>Перепродажа товаров</label><select name="resale"><option value="false">нет</option><option value="true">да</option></select></div>
+          <div><label>Стоимость патента в год, ₽</label><input name="patent_cost" type="number" min="0" placeholder="patent.nalog.gov.ru"></div>
+          <div><label>АУСН в регионе</label><select name="ausn_region"><option value="">не знаю</option><option value="true">есть</option><option value="false">нет</option></select></div>
+          <div><label>Год</label><select name="year"><option>2027</option><option>2026</option></select></div>
+          <div style="grid-column:1/-1"><button class="btn green">Пересчитать</button></div>
+        </form>
+      </details>
+      <div id="bestbox"></div>
+      <div class="rings" id="rings"></div>
+      <div class="chartbox"><h3>Нагрузка за год по режимам</h3><div class="legend"><span><i style="background:var(--g)"></i>налог</span><span><i style="background:#8FE3A6"></i>взносы</span><span><i style="background:#F4F6F5"></i>НДС</span></div><div id="stack"></div></div>
+      <div id="calcnotes"></div>
     </div>
-    <div class="body" id="t-calc">
-      <h3>Быстрый расчёт</h3>
-      <form id="calcf" class="grid">
-        <div><label>Доход в год, ₽</label><input name="income" type="number" min="0" value="1440000"></div>
-        <div><label>Расходы в год (без зарплат), ₽</label><input name="expenses" type="number" min="0" value="0"></div>
-        <div><label>Сотрудников</label><input name="employees" type="number" min="0" value="0"></div>
-        <div><label>ФОТ в год, ₽</label><input name="payroll" type="number" min="0" value="0"></div>
-        <div><label>Клиенты</label><select name="b2c_share"><option value="1">физлица</option><option value="0.5">и те и другие</option><option value="0">компании и ИП</option></select></div>
-        <div><label>Перепродажа товаров</label><select name="resale"><option value="false">нет</option><option value="true">да</option></select></div>
-        <div><label>Стоимость патента в год, ₽ (если знаете)</label><input name="patent_cost" type="number" min="0" placeholder="patent.nalog.gov.ru"></div>
-        <div><label>Год</label><select name="year"><option>2027</option><option>2026</option></select></div>
-        <div style="grid-column:1/-1"><button>Сравнить режимы</button></div>
-      </form>
-      <div id="calcout" style="margin-top:14px"></div>
+
+    <!-- АНАЛИТИКА -->
+    <div class="pane" id="p-dyn" hidden>
+      <div class="title"><div><h2>Как меняется выгода с ростом</h2><i class="bar"></i><p class="lead">Нагрузка каждого режима при разном доходе — ваша структура расходов сохраняется. Наведите на график, чтобы увидеть значения.</p></div>
+        <div class="seg" id="ymode"><button data-m="rub" class="on">₽ в год</button><button data-m="pct">% дохода</button></div></div>
+      <div class="chartbox"><div class="legend" id="lineleg"></div><div id="line"></div><div class="tip" id="tip" hidden></div></div>
+      <div id="switches"></div>
+      <div class="two">
+        <div class="chartbox"><h3>Близость к лимитам</h3><div id="limits"></div></div>
+        <div class="chartbox"><h3>Эффективная ставка</h3><div id="rates"></div></div>
+      </div>
     </div>
-    <div class="body" id="t-okved" hidden>
-      <h3>Подбор кодов ОКВЭД</h3>
-      <form id="okf" style="display:flex;gap:8px"><input name="q" placeholder="Опишите деятельность: «ремонт квартир», «репетитор по математике»"><button>Найти</button></form>
-      <div id="okout" style="margin-top:12px"></div>
+
+    <!-- ПЛАТЕЖИ -->
+    <div class="pane" id="p-pay" hidden>
+      <div class="title"><div><h2>Календарь платежей</h2><i class="bar"></i><p class="lead" id="paylead">Когда и сколько платить на выбранном режиме.</p></div>
+        <select id="payreg" style="width:auto"></select></div>
+      <div class="chartbox"><h3>Платежи по месяцам</h3><div id="paybars"></div></div>
+      <div class="chartbox"><table class="pay" id="paytable"></table></div>
     </div>
-    <div class="body" id="t-plan" hidden><div id="planout" class="muted">План появится после расчёта в чате или здесь — выберите режим:
-      <p><select id="planreg"><option value="npd">НПД</option><option value="usn6" selected>УСН 6%</option><option value="usn15">УСН 15%</option><option value="psn">Патент</option><option value="ausn8">АУСН 8%</option><option value="osno">ОСНО</option></select></p>
-      <button class="ghost" id="planbtn">Показать план</button></div></div>
-    <div class="body" id="t-check" hidden>
-      <h3>Предпроверка заявления Р21001</h3>
-      <p class="muted">Данные обрабатываются только для проверки и не сохраняются. Для демо можно ввести тестовые.</p>
-      <form id="chkf" class="grid">
+
+    <!-- ОКВЭД -->
+    <div class="pane" id="p-okved" hidden>
+      <div class="title"><div><h2>Коды ОКВЭД</h2><i class="bar"></i><p class="lead">Опишите деятельность своими словами — агент подберёт коды и покажет, доступны ли НПД и патент.</p></div></div>
+      <form id="okf" style="display:flex;gap:8px;margin-bottom:12px"><input name="q" placeholder="ремонт квартир, репетитор по математике…"><button class="btn">Найти</button></form>
+      <div id="okout"></div>
+    </div>
+
+    <!-- ПЛАН -->
+    <div class="pane" id="p-plan" hidden>
+      <div class="title"><div><h2>План регистрации</h2><i class="bar"></i></div>
+        <div style="display:flex;gap:8px"><select id="planreg" style="width:auto"><option value="npd">НПД</option><option value="usn6" selected>УСН 6%</option><option value="usn15">УСН 15%</option><option value="psn">Патент</option><option value="ausn8">АУСН 8%</option><option value="ausn20">АУСН 20%</option><option value="osno">ОСНО</option></select><button class="btn" id="planbtn">Показать</button></div></div>
+      <div id="planout" class="muted">План появится после расчёта или по кнопке «Показать».</div>
+    </div>
+
+    <!-- ПРОВЕРКА -->
+    <div class="pane" id="p-check" hidden>
+      <div class="title"><div><h2>Предпроверка Р21001</h2><i class="bar"></i><p class="lead">Ищем типовые основания для отказа до подачи. Данные не сохраняются и не передаются в языковую модель; для демо подойдут тестовые.</p></div></div>
+      <form id="chkf" class="form">
         <div style="grid-column:1/-1"><label>ФИО как в паспорте</label><input name="fio" placeholder="Иванова Анна Сергеевна"></div>
         <div><label>Дата рождения</label><input name="birth_date" type="date"></div>
-        <div><label>Паспорт (серия и номер)</label><input name="passport" placeholder="4510 123456"></div>
+        <div><label>Паспорт: серия и номер</label><input name="passport" placeholder="4510 123456"></div>
         <div><label>ИНН (если есть)</label><input name="inn" placeholder="12 цифр"></div>
         <div><label>E-mail</label><input name="email" type="email"></div>
-        <div style="grid-column:1/-1"><label>Коды ОКВЭД через запятую</label><input name="okved" placeholder="96.02, 96.09"></div>
+        <div style="grid-column:span 2"><label>Коды ОКВЭД через запятую</label><input name="okved" placeholder="96.02, 96.09"></div>
         <div><label>Канал подачи</label><select name="channel"><option value="gosuslugi">Госуслуги</option><option value="fns">Сервис ФНС</option><option value="bank">Банк</option><option value="mfc">МФЦ</option></select></div>
         <div><label>Режим</label><select name="regime"><option value="usn6">УСН 6%</option><option value="npd">НПД</option><option value="usn15">УСН 15%</option><option value="psn">Патент</option><option value="ausn8">АУСН 8%</option><option value="osno">ОСНО</option></select></div>
-        <div style="grid-column:1/-1"><label><input type="checkbox" name="already_ip" style="width:auto"> у меня уже есть статус ИП</label></div>
-        <div style="grid-column:1/-1"><button>Проверить</button></div>
+        <div><label>Уже есть статус ИП</label><select name="already_ip"><option value="">нет</option><option value="1">да</option></select></div>
+        <div style="grid-column:1/-1"><button class="btn green">Проверить</button></div>
       </form>
-      <div id="chkout" style="margin-top:12px"></div>
+      <div id="chkout" style="margin-top:16px"></div>
+    </div>
+
+    <!-- ОБ УСЛУГЕ -->
+    <div class="pane" id="p-service" hidden>
+      <div class="title"><div><h2>Почему эта услуга</h2><i class="bar"></i><p class="lead">Регистрация занимает 3 рабочих дня, но решения, принятые при ней, определяют налоги на годы вперёд.</p></div></div>
+      <div class="stats" id="stats"></div>
+      <div class="chartbox"><h3>Реформа 2026: пороги стали ниже</h3><div id="reform"></div></div>
+      <div class="chartbox"><h3>Нагрузка типичных заявителей, 2027 год</h3><div class="legend"><span><i style="background:var(--g2)"></i>режим от агента</span><span><i style="background:#8C9BA5"></i>«все берут УСН 6%»</span><span><i style="background:var(--bad)"></i>пропущено уведомление → ОСНО</span></div><div id="personas"></div></div>
+      <div class="chartbox"><h3>Модель эффекта для страны</h3>
+        <div class="effect">
+          <div>
+            <label>Новых ИП в год: <b id="e-n">734 000</b></label><input type="range" id="r-n" min="300000" max="1000000" step="2000" value="734000">
+            <label style="margin-top:12px">Доля, которой агент помог избежать ошибки: <b id="e-s">1%</b></label><input type="range" id="r-s" min="0.5" max="10" step="0.5" value="1">
+            <label style="margin-top:12px">Средняя переплата при ошибке, ₽: <b id="e-o">—</b></label><input type="range" id="r-o" min="50000" max="500000" step="5000" value="235000">
+          </div>
+          <div><div class="out" id="e-out">—</div><p class="muted" id="e-sub" style="margin-top:8px"></p><p class="muted">Иллюстрация, а не прогноз: базу для расчёта даст пилот с ФНС. Переплата по умолчанию — средняя по типичным заявителям с доходом до 5 млн ₽.</p></div>
+        </div>
+      </div>
     </div>
   </section>
 </main>
+<footer>Оценка за полный год для сравнения режимов, не налоговая консультация. Справочная ФНС: 8-800-222-22-22.</footer>
+</div>
+
 <script>
 const $ = s => document.querySelector(s);
-let SID = null;
-try { SID = sessionStorage.getItem('sid'); } catch(e) {}
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const rub = x => x == null ? '—' : Math.round(x).toLocaleString('ru-RU') + ' ₽';
+const short = x => { if(x == null) return '—'; const a = Math.abs(x);
+  if(a >= 1e9) return (x/1e9).toLocaleString('ru-RU',{maximumFractionDigits:1}) + ' млрд';
+  if(a >= 1e6) return (x/1e6).toLocaleString('ru-RU',{maximumFractionDigits:1}) + ' млн';
+  if(a >= 1e3) return Math.round(x/1e3).toLocaleString('ru-RU') + ' тыс'; return Math.round(x) + ''; };
+const pct = x => (x*100).toLocaleString('ru-RU',{maximumFractionDigits:1}) + '%';
+const COLORS = {npd:'#2FD15A',usn6:'#F4F6F5',usn15:'#8C9BA5',psn:'#F2C14E',ausn8:'#4FB3FF',ausn20:'#B48CFF',osno:'#FF7A59'};
+const SHORT = {npd:'НПД',usn6:'УСН 6%',usn15:'УСН 15%',psn:'Патент',ausn8:'АУСН 8%',ausn20:'АУСН 20%',osno:'ОСНО'};
+const MONTHS = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+let SID = null; try { SID = sessionStorage.getItem('sid'); } catch(e) {}
+let STATE = {an:null, ymode:'rub', hidden:new Set()};
+
 async function api(path, body){
   const r = await fetch(path, {method: body ? 'POST' : 'GET', headers: {'Content-Type':'application/json'}, body: body ? JSON.stringify(body) : undefined});
   return r.json();
 }
-function add(text, cls){ const d = document.createElement('div'); d.className = 'msg ' + cls; d.textContent = text; $('#log').appendChild(d); $('#log').scrollTop = 1e9; return d; }
-function tab(t){ document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t)); ['calc','okved','plan','check'].forEach(x => $('#t-'+x).hidden = x !== t); }
-document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => tab(b.dataset.t));
+function tab(t){ document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+  document.querySelectorAll('.pane').forEach(p => p.hidden = p.id !== 'p-' + t);
+  if(t === 'dyn' && STATE.an) renderLine(); }
+document.querySelectorAll('#nav button').forEach(b => b.onclick = () => tab(b.dataset.t));
 
-function renderCalc(res){
-  if(!res) return;
-  const av = res.results.filter(r => r.available && r.total != null);
-  const max = Math.max(...av.map(r => r.total), 1);
-  const order = res.ranking.map(c => res.results.find(r => r.code === c));
-  let h = '';
-  if(res.best){
-    h += `<div class="kpi"><div><span class="muted">Лучший вариант</span><b>${esc(res.best.name)}</b></div><div><span class="muted">Нагрузка в год</span><b>${rub(res.best.total)}</b></div>${res.savings_vs_worst ? `<div><span class="muted">Экономия vs худший</span><b>${rub(res.savings_vs_worst)}</b></div>` : ''}</div>`;
-  }
-  order.forEach((r,i) => {
-    h += `<div class="row ${i===0?'best':''}" title="${esc(r.notes.join('; '))}"><div class="nm">${esc(r.name)}${i===0?'<span class="tag">выгоднее</span>':''}<div class="muted">налог ${rub(r.tax)} · взносы ${rub(r.contrib_self + r.contrib_staff)}${r.vat ? ' · НДС ' + rub(r.vat) : ''}</div></div><div class="bar"><i style="width:${(r.total/max*100).toFixed(1)}%"></i></div><div class="sum">${rub(r.total)}</div></div>`;
-  });
-  res.results.filter(r => r.available && r.total == null).forEach(r => h += `<div class="row na"><div class="nm">${esc(r.name)}<div class="muted">${esc(r.notes[0])}</div></div><div class="sum">—</div></div>`);
-  res.results.filter(r => !r.available).forEach(r => h += `<div class="row na"><div class="nm">${esc(r.name)}<div class="muted">недоступен: ${esc(r.reasons.join(', '))}</div></div><div class="sum">✕</div></div>`);
-  res.warnings.forEach(w => h += `<div class="note warn">${esc(w)}</div>`);
-  h += `<p class="muted">${esc(res.disclaimer)}</p>`;
-  $('#calcout').innerHTML = h;
+/* ---------- графики ---------- */
+function ring(value, label, text){
+  const r = 42, c = 2*Math.PI*r, v = Math.max(0, Math.min(1, value));
+  return `<div class="ring"><svg viewBox="0 0 110 110" width="104" height="104" role="img" aria-label="${esc(label)}: ${esc(text)}">
+    <circle cx="55" cy="55" r="${r}" fill="none" stroke="#26323A" stroke-width="10"/>
+    <circle cx="55" cy="55" r="${r}" fill="none" stroke="#21A038" stroke-width="10" stroke-linecap="round" stroke-dasharray="${(c*v).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 55 55)"/>
+    <text x="55" y="61" text-anchor="middle" fill="#F4F6F5" font-size="${text.length > 6 ? 14 : 19}" font-weight="800" font-family="Montserrat,Arial">${esc(text)}</text></svg>
+    <div class="cap">${esc(label)}</div></div>`;
 }
+function renderStack(calc){
+  const av = calc.ranking.map(c => calc.results.find(r => r.code === c));
+  const max = Math.max(...av.map(r => r.total), 1);
+  const W = 760, rowH = 46, L = 150, R = 130, H = av.length*rowH + 10;
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Нагрузка по режимам">`;
+  av.forEach((r, i) => {
+    const y = i*rowH + 8, sc = v => (W - L - R) * v / max;
+    const parts = [['tax', r.tax, '#21A038'], ['c', r.contrib_self + r.contrib_staff, '#8FE3A6'], ['vat', r.vat, '#F4F6F5']];
+    let x = L;
+    s += `<text x="0" y="${y+20}" fill="${i===0?'#2FD15A':'#F4F6F5'}" font-size="13" font-weight="${i===0?800:600}" font-family="Montserrat,Arial">${esc(SHORT[r.code])}${i===0?' ★':''}</text>`;
+    s += `<rect x="${L}" y="${y+4}" width="${W-L-R}" height="22" rx="11" fill="#1E2A31"/>`;
+    parts.forEach(([k, v, col]) => { if(v > 0){ const w = Math.max(sc(v), 2); s += `<rect x="${x}" y="${y+4}" width="${w}" height="22" rx="${w>22?11:3}" fill="${col}"><title>${k==='tax'?'налог':k==='c'?'взносы':'НДС'}: ${rub(v)}</title></rect>`; x += w; } });
+    s += `<text x="${W}" y="${y+20}" text-anchor="end" fill="#F4F6F5" font-size="14" font-weight="800" font-family="Montserrat,Arial">${short(r.total)} ₽</text>`;
+  });
+  $('#stack').innerHTML = s + '</svg>';
+}
+function renderLine(){
+  const sv = STATE.an.sensitivity, box = $('#line');
+  const W = 760, H = 360, L = 64, R = 18, T = 26, B = 40;
+  const xs = sv.x, xmax = xs[xs.length-1];
+  const codes = Object.keys(sv.series).filter(c => sv.series[c].some(v => v != null));
+  const val = (c, i) => { const v = sv.series[c][i]; if(v == null) return null; return STATE.ymode === 'pct' ? v / xs[i] : v; };
+  let ymax = 0; codes.forEach(c => { if(STATE.hidden.has(c)) return; xs.forEach((_, i) => { const v = val(c, i); if(v != null && v > ymax) ymax = v; }); });
+  if(STATE.ymode === 'pct') ymax = Math.min(Math.max(ymax, .05), .45); ymax = ymax || 1;
+  const X = x => L + (W-L-R) * x / xmax, Y = y => T + (H-T-B) * (1 - Math.min(y, ymax) / ymax);
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Нагрузка по режимам в зависимости от дохода" id="lsvg">`;
+  for(let k = 0; k <= 4; k++){ const yv = ymax*k/4, y = Y(yv);
+    s += `<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="#26323A"/><text x="${L-8}" y="${y+4}" text-anchor="end" fill="#6F7C84" font-size="11" font-family="Montserrat,Arial">${STATE.ymode==='pct'?pct(yv):short(yv)}</text>`; }
+  for(let k = 0; k <= 5; k++){ const xv = xmax*k/5; s += `<text x="${X(xv)}" y="${H-14}" text-anchor="middle" fill="#6F7C84" font-size="11" font-family="Montserrat,Arial">${short(xv)}</text>`; }
+  s += `<text x="${W-R}" y="${H-1}" text-anchor="end" fill="#6F7C84" font-size="11" font-family="Montserrat,Arial">доход в год, ₽</text>`;
+  sv.thresholds.forEach((t, i) => { const x = X(t.income); s += `<line x1="${x}" x2="${x}" y1="${T}" y2="${H-B}" stroke="#F2C14E" stroke-opacity=".5" stroke-dasharray="4 5"/><text transform="translate(${x-5} ${T+4}) rotate(-90)" text-anchor="end" fill="#F2C14E" font-size="10.5" font-family="Montserrat,Arial">${esc(t.label)}</text>`; });
+  codes.forEach(c => { if(STATE.hidden.has(c)) return; let d = '', pen = false;
+    xs.forEach((x, i) => { const v = val(c, i); if(v == null){ pen = false; return; } d += (pen ? 'L' : 'M') + X(x).toFixed(1) + ' ' + Y(v).toFixed(1); pen = true; });
+    s += `<path d="${d}" fill="none" stroke="${COLORS[c]}" stroke-width="${c===STATE.an.kpis.best_code?3.5:2}" stroke-linejoin="round"/>`; });
+  const ux = X(Math.min(sv.income, xmax));
+  s += `<line x1="${ux}" x2="${ux}" y1="${T}" y2="${H-B}" stroke="#2FD15A" stroke-width="2"/><rect x="${ux-46}" y="${H-B-24}" width="92" height="20" rx="10" fill="#21A038"/><text x="${ux}" y="${H-B-10}" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="Montserrat,Arial">ВАШ ДОХОД</text>`;
+  s += `<line id="hov" x1="0" x2="0" y1="${T}" y2="${H-B}" stroke="#F4F6F5" stroke-opacity=".5" visibility="hidden"/>`;
+  s += `<rect x="${L}" y="${T}" width="${W-L-R}" height="${H-T-B}" fill="transparent" id="hit"/></svg>`;
+  box.innerHTML = s;
+  $('#lineleg').innerHTML = codes.map(c => `<span data-c="${c}" class="${STATE.hidden.has(c)?'off':''}"><i style="background:${COLORS[c]}"></i>${SHORT[c]}</span>`).join('');
+  document.querySelectorAll('#lineleg span').forEach(sp => sp.onclick = () => { const c = sp.dataset.c; STATE.hidden.has(c) ? STATE.hidden.delete(c) : STATE.hidden.add(c); renderLine(); });
+  const svg = $('#lsvg'), tip = $('#tip');
+  $('#hit').onmousemove = e => {
+    const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    const i = Math.max(0, Math.min(xs.length-1, Math.round((p.x - L) / (W-L-R) * xs.length) - 1));
+    const hv = $('#hov'); hv.setAttribute('x1', X(xs[i])); hv.setAttribute('x2', X(xs[i])); hv.setAttribute('visibility', 'visible');
+    const rows = codes.filter(c => !STATE.hidden.has(c) && sv.series[c][i] != null).map(c => [c, sv.series[c][i]]).sort((a, b) => a[1]-b[1]);
+    tip.innerHTML = `<div>Доход <b>${rub(xs[i])}</b></div>` + rows.map(([c, v], k) => `<div style="display:flex;justify-content:space-between;gap:12px"><span><i style="display:inline-block;width:10px;height:3px;background:${COLORS[c]};margin-right:6px;vertical-align:middle"></i>${SHORT[c]}${k===0?' ★':''}</span><span>${short(v)} · ${pct(v/xs[i])}</span></div>`).join('');
+    const bx = box.getBoundingClientRect(), r0 = box.parentElement.getBoundingClientRect();
+    let left = e.clientX - r0.left + 14; if(left > r0.width - 230) left = e.clientX - r0.left - 230;
+    tip.style.left = left + 'px'; tip.style.top = (bx.top - r0.top + 20) + 'px'; tip.hidden = false;
+  };
+  $('#hit').onmouseleave = () => { tip.hidden = true; $('#hov').setAttribute('visibility', 'hidden'); };
+}
+document.querySelectorAll('#ymode button').forEach(b => b.onclick = () => { STATE.ymode = b.dataset.m; document.querySelectorAll('#ymode button').forEach(x => x.classList.toggle('on', x === b)); renderLine(); });
+
+function renderAnalysis(an){
+  STATE.an = an; const calc = an.calc, k = an.kpis;
+  // лучший режим
+  $('#bestbox').innerHTML = k.best_code ? `<div class="best"><div><h3 style="margin-bottom:6px">Выгоднее всего</h3><div class="big">${esc(SHORT[k.best_code])}</div></div><div class="white">${rub(k.best_total)} в год</div><div class="pill">≈ ${rub(k.monthly_payment)} в месяц</div></div>` : '<div class="note bad">Ни один режим не подходит под параметры.</div>';
+  const top = calc.results.filter(r => calc.ranking.includes(r.code));
+  const worst = top.length ? Math.max(...top.map(r => r.total)) : 0;
+  $('#rings').innerHTML = k.best_code ? [
+    ring(k.effective_rate / .25, 'эффективная ставка', pct(k.effective_rate)),
+    ring(k.net_share, 'остаётся на руках', pct(k.net_share)),
+    ring(worst ? k.saving_vs_worst / worst : 0, 'экономия к худшему', short(k.saving_vs_worst)),
+    ring(k.saving_vs_usn6 != null && top.length ? k.saving_vs_usn6 / Math.max(...top.map(r=>r.total)) : 0, 'выгода к УСН 6%', k.saving_vs_usn6 != null ? short(k.saving_vs_usn6) : '—'),
+  ].join('') : '';
+  renderStack(calc);
+  let n = '';
+  calc.results.filter(r => r.available && r.total == null).forEach(r => n += `<div class="note">${esc(r.name)}: ${esc(r.notes[0])}</div>`);
+  calc.results.filter(r => !r.available).forEach(r => n += `<div class="note">✕ ${esc(r.name)} — ${esc(r.reasons.join(', '))}</div>`);
+  calc.warnings.forEach(w => n += `<div class="note warn">${esc(w)}</div>`);
+  n += `<p class="muted">${esc(calc.disclaimer)}</p>`;
+  $('#calcnotes').innerHTML = n;
+  // переключения
+  const sw = an.sensitivity.switches;
+  $('#switches').innerHTML = sw.length ? '<h3>Точки перелома</h3>' + sw.map(s => `<div class="switch"><span class="muted">при доходе от</span><span class="p w">${short(s.income)} ₽</span><span class="p">${SHORT[s.from]}</span><span>→</span><span class="p" style="background:#21A038">${SHORT[s.to]}</span></div>`).join('') : '<div class="note ok">В этом диапазоне дохода лучший режим не меняется.</div>';
+  // лимиты
+  $('#limits').innerHTML = an.limits.map(l => `<div class="lim"><span>${esc(l.name)}</span><div class="track"><i style="width:${Math.min(l.share,1)*100}%;background:${l.share>1?'var(--bad)':l.share>.8?'var(--warn)':'var(--g)'}"></i></div><span class="v">${l.share>1?'превышен':pct(l.share)+' из '+short(l.limit)}</span></div>`).join('');
+  // ставки
+  const rates = Object.entries(k.rates || {}).sort((a, b) => a[1]-b[1]); const rmax = Math.max(...rates.map(r => r[1]), .01);
+  $('#rates').innerHTML = rates.map(([c, v]) => `<div class="lim" style="grid-template-columns:90px 1fr 64px"><span>${SHORT[c]}</span><div class="track"><i style="width:${v/rmax*100}%;background:${COLORS[c]}"></i></div><span class="v">${pct(v)}</span></div>`).join('');
+  // платежи
+  const sel = $('#payreg'); sel.innerHTML = calc.ranking.map(c => `<option value="${c}" ${c===an.calendar.regime?'selected':''}>${SHORT[c]}</option>`).join('');
+  renderPay(an.calendar);
+  if(!$('#p-dyn').hidden) renderLine();
+}
+function renderPay(cal){
+  $('#paylead').textContent = cal.items.length ? `Режим: ${cal.name}. Налог распределён по срокам уплаты равномерно.` : 'Для этого режима нет данных.';
+  const bm = cal.by_month || [], max = Math.max(...bm.map(m => m.amount), 1);
+  const W = 760, H = 240, L = 10, B = 34, T = 22, bw = Math.min(40, (W - L*2) / Math.max(bm.length, 1) - 8);
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Платежи по месяцам">`;
+  bm.forEach((m, i) => { const step = (W - L*2) / bm.length, x = L + i*step + (step - bw)/2, h = (H - T - B) * m.amount / max, y = H - B - h;
+    const [yy, mm] = m.month.split('-');
+    s += `<rect x="${x}" y="${y}" width="${bw}" height="${h}" rx="8" fill="${m.amount===max?'#2FD15A':'#21A038'}" fill-opacity="${m.amount===max?1:.75}"><title>${rub(m.amount)}</title></rect>`;
+    s += `<text x="${x+bw/2}" y="${y-6}" text-anchor="middle" fill="#F4F6F5" font-size="10.5" font-weight="700" font-family="Montserrat,Arial">${short(m.amount)}</text>`;
+    s += `<text x="${x+bw/2}" y="${H-B+16}" text-anchor="middle" fill="#A7B2B8" font-size="11" font-family="Montserrat,Arial">${MONTHS[+mm-1]}</text><text x="${x+bw/2}" y="${H-B+29}" text-anchor="middle" fill="#6F7C84" font-size="10" font-family="Montserrat,Arial">${yy.slice(2)}</text>`; });
+  $('#paybars').innerHTML = s + '</svg>';
+  $('#paytable').innerHTML = cal.items.map(it => { const [y, m, d] = it.date.split('-'); return `<tr><td style="width:110px;color:var(--g2);font-weight:700">${+d} ${MONTHS[+m-1]} ${y}</td><td>${esc(it.label)}</td><td>${rub(it.amount)}</td></tr>`; }).join('');
+}
+$('#payreg').onchange = async () => { const r = await api('/api/analyze', {...STATE.an.calc.input, calendar_regime: $('#payreg').value}); renderPay(r.calendar); };
+
+/* ---------- прочие вкладки ---------- */
 function renderOkved(codes){
-  if(!codes || !codes.length){ $('#okout').innerHTML = '<p class="muted">Ничего не найдено — опишите иначе.</p>'; return; }
-  $('#okout').innerHTML = codes.map((c,i) => `<div class="row"><div class="nm"><span class="code">${c.code}</span>${esc(c.title)}<div class="muted">${i===0?'основной · ':''}${c.npd_ok?'можно на НПД':'нельзя на НПД'} · ${c.psn_typical?'обычно есть патент':'патента обычно нет'}${c.license_or_special?' · есть особые требования':''}</div></div></div>`).join('');
+  $('#okout').innerHTML = (!codes || !codes.length) ? '<p class="muted">Ничего не найдено — опишите иначе.</p>' :
+    codes.map((c, i) => `<div class="row"><span class="code">${c.code}</span><div>${esc(c.title)}<div>${i===0?'<span class="tag g">основной</span>':''}<span class="tag ${c.npd_ok?'g':''}">${c.npd_ok?'можно на НПД':'нельзя на НПД'}</span><span class="tag ${c.psn_typical?'g':''}">${c.psn_typical?'обычно есть патент':'патента обычно нет'}</span>${c.license_or_special?'<span class="tag">особые требования</span>':''}</div></div></div>`).join('');
 }
 function renderPlan(plan){
   if(!plan) return;
-  $('#planout').innerHTML = `<h3>План регистрации</h3><ol>${plan.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol><h3>Документы</h3><ul>${plan.documents.map(s => `<li>${esc(s)}</li>`).join('')}</ul>`;
+  $('#planout').innerHTML = `<ol class="steps">${plan.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol><h3 style="margin-top:20px">Документы</h3>${plan.documents.map(d => `<div class="row"><span class="code">✓</span><span>${esc(d)}</span></div>`).join('')}`;
 }
 function renderCheck(pc, draft){
   if(!pc) return;
   const cls = pc.refusal_risk === 'низкий' ? 'ok' : pc.refusal_risk === 'средний' ? 'warn' : 'bad';
-  let h = `<div class="note ${cls}"><b>Риск отказа: ${esc(pc.refusal_risk)}</b></div>`;
+  let h = `<div class="note ${cls}" style="font-size:16px;font-weight:800;text-transform:uppercase">Риск отказа: ${esc(pc.refusal_risk)}</div>`;
   pc.errors.forEach(e => h += `<div class="note bad">✕ ${esc(e)}</div>`);
   pc.warnings.forEach(e => h += `<div class="note warn">! ${esc(e)}</div>`);
   pc.passed.forEach(e => h += `<div class="note ok">✓ ${esc(e)}</div>`);
-  if(draft){
-    h += '<h3>Черновик данных для Р21001</h3>';
-    for(const [sec, val] of Object.entries(draft)){
-      h += `<p><b>${esc(sec)}</b><br>` + (typeof val === 'object' && val ? Object.entries(val).map(([k,v]) => `${esc(k)}: ${esc(Array.isArray(v) ? (v.join('; ') || '—') : (v ?? '—'))}`).join('<br>') : esc(val)) + '</p>';
-    }
-  }
+  if(draft){ h += '<h3 style="margin-top:18px">Черновик данных для Р21001</h3>';
+    for(const [sec, val] of Object.entries(draft)) h += `<div class="row"><div><b>${esc(sec)}</b><div class="muted">` + (typeof val === 'object' && val ? Object.entries(val).map(([k, v]) => `${esc(k)}: ${esc(Array.isArray(v) ? (v.join('; ') || '—') : (v ?? '—'))}`).join('<br>') : esc(val)) + '</div></div></div>'; }
   $('#chkout').innerHTML = h;
 }
+async function loadService(){
+  const s = await api('/api/service', {year: 2027});
+  $('#stats').innerHTML = s.stats.map(x => `<div class="stat"><span class="num">${esc(x.value)}</span><div class="lb">${esc(x.label)}<br><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.source)}</a></div></div>`).join('');
+  // реформа
+  const W = 760, rh = 54; let r = `<svg viewBox="0 0 ${W} ${s.reform.length*rh+6}" width="100%" role="img" aria-label="Пороги до и после реформы">`;
+  s.reform.forEach((f, i) => { const y = i*rh, sc = v => 420 * v / 60e6;
+    r += `<text x="0" y="${y+22}" fill="#F4F6F5" font-size="13" font-weight="600" font-family="Montserrat,Arial">${esc(f.what)}</text>`;
+    r += `<rect x="230" y="${y+6}" width="${sc(f.before)}" height="18" rx="9" fill="#3A4850"/><text x="${236+sc(f.before)}" y="${y+20}" fill="#A7B2B8" font-size="12" font-family="Montserrat,Arial">было ${short(f.before)}</text>`;
+    r += `<rect x="230" y="${y+28}" width="${sc(f.after)}" height="18" rx="9" fill="#21A038"/><text x="${236+sc(f.after)}" y="${y+42}" fill="#2FD15A" font-size="12" font-weight="800" font-family="Montserrat,Arial">стало ${short(f.after)}</text>`; });
+  $('#reform').innerHTML = r + '</svg>';
+  // типичные заявители: строка на заявителя, своя шкала
+  let p = `<svg viewBox="0 0 ${W} ${s.personas.length*92}" width="100%" role="img" aria-label="Нагрузка типичных заявителей">`;
+  s.personas.forEach((x, i) => { const y = i*92, mx = Math.max(x.best, x.usn6 || 0, x.osno), sc = v => 430 * v / mx;
+    p += `<text x="0" y="${y+18}" fill="#F4F6F5" font-size="13" font-weight="700" font-family="Montserrat,Arial">${esc(x.name)}</text><text x="0" y="${y+36}" fill="#6F7C84" font-size="11" font-family="Montserrat,Arial">доход ${short(x.income)} ₽ · агент: ${esc(SHORT[x.best_code])}</text>`;
+    [[x.best, '#2FD15A'], [x.usn6, '#8C9BA5'], [x.osno, '#FF7A59']].forEach(([v, c], k) => { if(v == null) return; const yy = y + 4 + k*24;
+      p += `<rect x="230" y="${yy}" width="${Math.max(sc(v),3)}" height="16" rx="8" fill="${c}"/><text x="${238+sc(v)}" y="${yy+13}" fill="${c}" font-size="12" font-weight="700" font-family="Montserrat,Arial">${short(v)} ₽</text>`; }); });
+  $('#personas').innerHTML = p + '</svg>';
+  $('#r-o').value = s.typical_overpay_osno; effect();
+}
+function effect(){
+  const n = +$('#r-n').value, sh = +$('#r-s').value / 100, o = +$('#r-o').value;
+  $('#e-n').textContent = n.toLocaleString('ru-RU'); $('#e-s').textContent = (+$('#r-s').value).toLocaleString('ru-RU') + '%'; $('#e-o').textContent = o.toLocaleString('ru-RU');
+  $('#e-out').textContent = short(n*sh*o) + ' ₽ в год'; $('#e-sub').textContent = `${Math.round(n*sh).toLocaleString('ru-RU')} предпринимателей не переплатят в первый год`;
+}
+['#r-n','#r-s','#r-o'].forEach(id => $(id).oninput = effect);
 
+/* ---------- чат и формы ---------- */
+function add(text, cls){ const d = document.createElement('div'); d.className = 'msg ' + cls; d.textContent = text; $('#log').appendChild(d); $('#log').scrollTop = 1e9; return d; }
+function fillForm(inp){ const f = $('#calcf');
+  for(const k of ['income','expenses','employees','payroll']) if(inp[k] != null) f[k].value = Math.round(inp[k]);
+  f.b2c_share.value = inp.b2c_share >= .75 ? '1' : inp.b2c_share <= .25 ? '0' : '0.5';
+  f.resale.value = inp.resale ? 'true' : 'false'; f.patent_cost.value = inp.patent_cost ?? '';
+  f.ausn_region.value = inp.ausn_region == null ? '' : String(inp.ausn_region); f.year.value = inp.year; }
+function formProfile(){ const f = Object.fromEntries(new FormData($('#calcf')));
+  const p = {}; for(const k of ['income','expenses','payroll','patent_cost']) p[k] = f[k] === '' ? null : Number(f[k]);
+  p.employees = Number(f.employees || 0); p.b2c_share = Number(f.b2c_share); p.resale = f.resale === 'true';
+  p.ausn_region = f.ausn_region === '' ? null : f.ausn_region === 'true'; p.year = Number(f.year); return p; }
+async function analyze(profile){ const an = await api('/api/analyze', profile); if(an.calc) renderAnalysis(an); }
 async function send(text){
-  if(!text.trim()) return;
-  add(text, 'me');
-  const wait = add('Думаю…', 'bot');
+  if(!text.trim()) return; add(text, 'me'); const wait = add('Думаю…', 'bot');
   try{
     const r = await api('/api/chat', {session_id: SID, message: text});
-    SID = r.session_id; try { sessionStorage.setItem('sid', SID); } catch(e) {}
-    wait.textContent = r.reply;
-    (r.trace || []).forEach(t => { const d = document.createElement('div'); d.className = 'trace'; d.textContent = t.tool ? `🔧 инструмент: ${t.tool}` : `⚠ ${t.error}`; $('#log').insertBefore(d, wait); });
-    $('#mode').textContent = r.mode;
+    if(r.session_id){ SID = r.session_id; try { sessionStorage.setItem('sid', SID); } catch(e) {} }
+    wait.textContent = r.reply || r.error || 'Ошибка';
+    (r.trace || []).forEach(t => { const d = document.createElement('div'); d.className = 'trace'; d.textContent = t.tool ? '⚙ инструмент: ' + t.tool : '⚠ ' + t.error; $('#log').insertBefore(d, wait); });
+    if(r.mode) $('#mode').textContent = r.mode;
     if(r.okved) renderOkved(r.okved);
     if(r.plan) renderPlan(r.plan);
     if(r.precheck) renderCheck(r.precheck, r.draft);
-    if(r.calc){ renderCalc(r.calc); tab('calc'); }
-    wait.scrollIntoView({block: 'start', behavior: 'smooth'});
-  }catch(e){ wait.textContent = 'Сервер недоступен. Проверьте, что приложение запущено.'; }
+    if(r.calc){ fillForm(r.calc.input); await analyze(r.calc.input); tab('calc'); }
+    wait.scrollIntoView({block:'nearest'});
+  }catch(e){ wait.textContent = 'Сервер недоступен. Обновите страницу через минуту.'; }
 }
 $('#chatf').onsubmit = e => { e.preventDefault(); const v = $('#inp').value; $('#inp').value = ''; send(v); };
 document.querySelectorAll('.chips button').forEach(b => b.onclick = () => send(b.dataset.q));
-$('#calcf').onsubmit = async e => {
-  e.preventDefault(); const f = Object.fromEntries(new FormData(e.target));
-  for(const k of ['income','expenses','payroll','patent_cost','b2c_share']) f[k] = f[k] === '' ? null : Number(f[k]);
-  f.employees = Number(f.employees || 0); f.year = Number(f.year); f.resale = f.resale === 'true';
-  renderCalc(await api('/api/calc', f));
-};
+$('#calcf').onsubmit = e => { e.preventDefault(); analyze(formProfile()); };
 $('#okf').onsubmit = async e => { e.preventDefault(); renderOkved((await api('/api/okved', {query: e.target.q.value})).codes); };
-$('#planbtn').onclick = async () => { const r = await api('/api/precheck', {regime: $('#planreg').value, fio: 'x x', okved: ['00.00']}); renderPlan(r.plan); };
-$('#chkf').onsubmit = async e => {
-  e.preventDefault(); const f = Object.fromEntries(new FormData(e.target));
+$('#planbtn').onclick = async () => { const r = await api('/api/precheck', {regime: $('#planreg').value, fio: '-', okved: []}); renderPlan(r.plan); };
+$('#chkf').onsubmit = async e => { e.preventDefault(); const f = Object.fromEntries(new FormData(e.target));
   f.okved = (f.okved || '').split(/[,;\s]+/).filter(Boolean); f.already_ip = !!f.already_ip;
-  const r = await api('/api/precheck', f); renderCheck(r.precheck, r.draft); renderPlan(r.plan);
-};
-api('/api/health').then(h => { $('#mode').textContent = h.mode; add(h.greeting, 'bot'); }).catch(() => add('Сервер недоступен.', 'bot'));
+  const r = await api('/api/precheck', f); renderCheck(r.precheck, r.draft); renderPlan(r.plan); };
+window.addEventListener('resize', () => { if(STATE.an && !$('#p-dyn').hidden) renderLine(); });
+
+api('/api/health').then(h => { $('#mode').textContent = h.mode; add(h.greeting, 'bot'); }).catch(() => add('Сервер просыпается — обновите страницу через минуту.', 'bot'));
+analyze(formProfile()); loadService();
 </script>
 </body>
 </html>

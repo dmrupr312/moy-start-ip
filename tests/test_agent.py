@@ -137,3 +137,28 @@ class TestDialog(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestAnalytics(unittest.TestCase):
+    def test_full_and_switch(self):
+        from agent import analytics
+        an = analytics.full({"income": 1_440_000, "b2c_share": 1.0})
+        self.assertEqual(an["kpis"]["best_code"], "npd")
+        self.assertAlmostEqual(an["kpis"]["saving_vs_usn6"], 86_400 - 47_600)
+        # после лимита 2,4 млн НПД уходит, лучшим становится УСН 6%
+        self.assertEqual(an["sensitivity"]["switches"][0]["to"], "usn6")
+        self.assertTrue(2_400_000 <= an["sensitivity"]["switches"][0]["income"] <= 2_600_000)
+
+    def test_calendar_sums(self):
+        from agent import analytics, rules
+        calc = rules.compare_regimes({"income": 3_000_000, "year": 2026})
+        cal = analytics.calendar(calc, "usn6")
+        usn = next(r for r in calc["results"] if r["code"] == "usn6")
+        self.assertAlmostEqual(sum(i["amount"] for i in cal["items"]), usn["total"], delta=5)
+
+    def test_service(self):
+        from agent import analytics
+        s = analytics.service()
+        self.assertEqual(len(s["personas"]), 5)
+        for p in s["personas"]:
+            self.assertLessEqual(p["best"], p["osno"])
